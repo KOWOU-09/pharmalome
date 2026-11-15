@@ -29,7 +29,8 @@ RUN printf '%s\n' \
 
 RUN composer install --no-dev --no-interaction --prefer-dist --no-progress --optimize-autoloader
 
-RUN chown -R www-data:www-data storage bootstrap/cache
+RUN mkdir -p storage bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache
 
 EXPOSE 80
 
