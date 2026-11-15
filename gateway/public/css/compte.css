@@ -1,0 +1,13 @@
+.page-heading { margin-bottom: 1.5rem; }
+.eyebrow { margin: 0 0 .35rem; color: var(--primary); font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.account-grid { align-items: stretch; }
+.account-card { padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid var(--border); border-radius: 18px; background: #fff; box-shadow: var(--shadow); }
+.account-card h2 { margin: .5rem 0 1rem; font-size: 1.15rem; }
+.account-icon { color: var(--primary); font-size: 2rem; }
+.account-details { margin: 0; }
+.account-details div { display: grid; grid-template-columns: minmax(120px, .7fr) 1.3fr; gap: .75rem; padding: .8rem 0; border-top: 1px solid var(--border); }
+.account-details dt { color: var(--muted); font-weight: 600; }
+.account-details dd { margin: 0; font-weight: 650; overflow-wrap: anywhere; }
+.account-actions { flex-wrap: wrap; margin: 1rem 0 0; }
+.staff-shortcuts { margin-top: 1rem; }
+@media (max-width: 560px) { .account-details div { grid-template-columns: 1fr; gap: .2rem; } }

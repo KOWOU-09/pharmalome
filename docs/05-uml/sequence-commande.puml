@@ -1,0 +1,77 @@
+@startuml
+skinparam shadowing false
+skinparam roundCorner 12
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam backgroundColor white
+skinparam dpi 150
+skinparam defaultFontColor #1F2933
+skinparam ArrowColor #14694A
+skinparam ParticipantBorderColor #14694A
+skinparam ActorBorderColor #14694A
+skinparam ActorFontColor #1F2933
+skinparam ParticipantFontColor #1B8A5A
+skinparam SequenceLifeLineBorderColor #14694A
+skinparam SequenceLifeLineBackgroundColor #E3F4EB
+skinparam NoteBackgroundColor #FFF8E1
+skinparam NoteBorderColor #14694A
+skinparam SequenceGroupBorderColor #14694A
+
+autonumber
+header PharmaLomé
+title Séquence — commande avec ordonnance
+footer 14 novembre 2026
+
+actor Client #E3F4EB
+participant "Gateway\nCheckoutController" as Gateway #F3E8FF
+participant "Service utilisateurs\nGET /api/me" as Users #E3F4EB
+participant "Service catalogue" as Catalog #EAF2FF
+participant "Service commandes" as Orders #FFF1E6
+actor Pharmacien #FFF8E1
+
+Client -> Gateway : POST /checkout\nsession + panier + fichier éventuel
+Gateway -> Users : GET /api/me\nAuthorization avec jeton Sanctum
+alt Jeton invalide ou expiré
+  Users --> Gateway : 401 / 403
+  Gateway --> Client : Session expirée, redirection connexion
+else Jeton valide
+  Users --> Gateway : 200 — profil actif
+  Gateway -> Catalog : POST /api/medicaments/verifier\nX-Internal-Key + articles
+  alt Stock insuffisant ou médicament introuvable
+    Catalog --> Gateway : 422 — ok=false
+    Gateway --> Client : Erreur panier, commande non créée
+  else Articles disponibles
+    Catalog --> Gateway : 200 — id, nom, prix, ordonnance_requise
+    Gateway -> Gateway : Exiger le fichier si ordonnance_requise\net préparer les lignes avec prix du catalogue
+    Gateway -> Orders : POST /api/commandes\nX-Internal-Key + user_id + articles + ordonnance
+    Orders -> Orders : Créer commande et lignes\navec fichier : ordonnance_a_valider
+    Orders -> Orders : Créer ordonnance en_attente\net notification client
+    Orders --> Gateway : 201 — commande enregistrée
+    Gateway --> Client : Redirection vers Mes commandes
+
+    Pharmacien -> Gateway : Ouvrir les ordonnances\n(session pharmacien vérifié)
+    Gateway -> Orders : GET /api/ordonnances\nX-Internal-Key
+    Orders --> Gateway : Liste incluant la commande
+    Pharmacien -> Gateway : Ouvrir le fichier d'ordonnance
+    Gateway -> Orders : GET /api/ordonnances/{id}/fichier\nX-Internal-Key
+    Orders --> Gateway : Fichier stocké
+    Pharmacien -> Gateway : Décision : valider ou refuser
+    alt Ordonnance refusée
+      Gateway -> Orders : PATCH /api/ordonnances/{id}/refuser\nmotif_refus + pharmacien_id
+      Orders -> Orders : ordonnance.statut = refusee\ncommande.statut = refusee
+      Orders --> Gateway : Ordonnance refusée
+      Gateway --> Pharmacien : Confirmation du refus
+    else Ordonnance validée
+      Gateway -> Orders : PATCH /api/ordonnances/{id}/valider\npharmacien_id
+      Orders -> Orders : ordonnance.statut = validee\ncommande.statut = validee
+      Orders --> Gateway : Ordonnance validée
+      Gateway --> Pharmacien : Confirmation de validation
+      note over Catalog,Orders #FFF8E1
+        Le catalogue possède POST /api/medicaments/{id}/stock/diminuer,
+        mais le checkout et la validation de l'ordonnance ne l'appellent pas.
+        Aucune baisse automatique de stock n'est donc effectuée dans ce parcours.
+      end note
+    end
+  end
+end
+@enduml

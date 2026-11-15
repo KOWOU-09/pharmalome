@@ -1,0 +1,24 @@
+.info-page { padding-top: 2rem; }
+.info-lead { max-width: 720px; margin: -0.25rem 0 2rem; }
+.info-intro { max-width: 850px; margin: 0 0 1.5rem; padding: 1.5rem; border: 1px solid var(--border); border-radius: var(--radius); background: linear-gradient(130deg, #f2faf3, #fff); }
+.info-intro h2, .info-card h2, .info-cta h2 { margin: 0 0 .6rem; color: var(--primary-dark); font-size: 1.2rem; }
+.info-intro p, .info-card p, .info-cta p, .contact-details > p { margin: 0; color: var(--muted); line-height: 1.7; }
+.info-card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.info-card { padding: 1.4rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--white); box-shadow: var(--shadow); }
+.info-card > .material-symbols-rounded { color: var(--primary); font-size: 2rem; }
+.info-cta { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1.5rem; padding: 1.4rem; border-radius: var(--radius); background: var(--soft); }
+.contact-layout { display: grid; grid-template-columns: minmax(240px, .8fr) minmax(0, 1.2fr); gap: 1.5rem; align-items: start; margin-top: 1.5rem; }
+.contact-details, .contact-form { padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid var(--border); border-radius: var(--radius); background: var(--white); box-shadow: var(--shadow); }
+.contact-details h2, .contact-form h2 { margin: 0 0 1rem; }
+.contact-details > a { display: flex; gap: .8rem; align-items: center; margin-top: 1.2rem; color: var(--primary-dark); line-height: 1.6; overflow-wrap: anywhere; }
+.contact-details > a > .material-symbols-rounded, .contact-location > .material-symbols-rounded { color: var(--primary); }
+.contact-location { display: flex; gap: .8rem; align-items: center; margin-top: 1.2rem !important; }
+.contact-details .contact-note { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: .9rem; }
+.contact-form { display: grid; gap: 1rem; }
+.contact-form label { display: block; margin-bottom: .4rem; font-weight: 600; }
+.contact-form .btn { justify-self: start; }
+.field-error { margin: .35rem 0 0; color: #b42318; font-size: .9rem; }
+@media (max-width: 760px) {
+    .info-card-grid, .contact-layout { grid-template-columns: 1fr; }
+    .info-cta { align-items: flex-start; flex-direction: column; }
+}

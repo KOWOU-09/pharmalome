@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 72" fill="none">
+  <rect x="2" y="6" width="60" height="60" rx="18" fill="#087A45"/>
+  <path d="M27 17h10v14h14v10H37v14H27V41H13V31h14V17Z" fill="#fff"/>
+  <text x="76" y="37" fill="#15352B" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800" letter-spacing="-1">MedExpress</text>
+  <text x="78" y="58" fill="#087A45" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="800" letter-spacing="3">TOGO</text>
+</svg>

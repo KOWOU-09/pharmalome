@@ -1,0 +1,142 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pharmalome-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD doit être défini dans le .env racine}"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: ../docker/Dockerfile.gateway
+    env_file:
+      - ./gateway/.env
+    container_name: pharmalome-gateway
+    depends_on:
+      - postgres
+    command: bash -lc "chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && find /var/www/html/storage /var/www/html/bootstrap/cache -type d -exec chmod 2775 {} + && find /var/www/html/storage /var/www/html/bootstrap/cache -type f -exec chmod 664 {} + && setfacl -R -m g:www-data:rwX /var/www/html/storage /var/www/html/bootstrap/cache && find /var/www/html/storage /var/www/html/bootstrap/cache -type d -exec setfacl -m d:g:www-data:rwx {} + && umask 0002 && php artisan optimize:clear && php artisan optimize && apache2-foreground"
+    ports:
+      - "8080:80"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8080
+      APP_KEY: "${APP_KEY_GATEWAY:?APP_KEY_GATEWAY doit être défini dans le .env racine}"
+      SESSION_DRIVER: file
+      CACHE_STORE: file
+      INTERNAL_KEY: "${INTERNAL_KEY:?INTERNAL_KEY doit être défini dans le .env racine}"
+      USER_SERVICE_URL: http://user-service
+      CATALOG_SERVICE_URL: http://catalog-service
+      ORDER_SERVICE_URL: http://order-service
+      CONTACT_EMAIL: ${CONTACT_EMAIL:-contact@medexpress.tg}
+    volumes:
+      - gateway_storage:/var/www/html/storage
+
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: ../docker/Dockerfile.service
+    env_file:
+      - ./user-service/.env
+    container_name: pharmalome-user-service
+    depends_on:
+      - postgres
+    command: bash -lc "chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache && php artisan optimize:clear && php artisan optimize && apache2-foreground"
+    ports:
+      - "8001:80"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8001
+      APP_KEY: "${APP_KEY_USER_SERVICE:?APP_KEY_USER_SERVICE doit être défini dans le .env racine}"
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: user_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD doit être défini dans le .env racine}"
+      SESSION_DRIVER: file
+      CACHE_STORE: file
+      INTERNAL_KEY: "${INTERNAL_KEY:?INTERNAL_KEY doit être défini dans le .env racine}"
+      GATEWAY_URL: http://localhost:8080
+    volumes:
+      - user_service_storage:/var/www/html/storage
+
+  catalog-service:
+    build:
+      context: ./catalog-service
+      dockerfile: ../docker/Dockerfile.service
+    env_file:
+      - ./catalog-service/.env
+    container_name: pharmalome-catalog-service
+    depends_on:
+      - postgres
+    command: bash -lc "chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache && php artisan optimize:clear && php artisan optimize && apache2-foreground"
+    ports:
+      - "8002:80"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8002
+      APP_KEY: "${APP_KEY_CATALOG_SERVICE:?APP_KEY_CATALOG_SERVICE doit être défini dans le .env racine}"
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: catalog_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD doit être défini dans le .env racine}"
+      SESSION_DRIVER: file
+      CACHE_STORE: file
+      INTERNAL_KEY: "${INTERNAL_KEY:?INTERNAL_KEY doit être défini dans le .env racine}"
+    volumes:
+      - catalog_service_storage:/var/www/html/storage
+
+  order-service:
+    build:
+      context: ./order-service
+      dockerfile: ../docker/Dockerfile.service
+    env_file:
+      - ./order-service/.env
+    container_name: pharmalome-order-service
+    depends_on:
+      - postgres
+    command: bash -lc "chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache && php artisan optimize:clear && php artisan optimize && apache2-foreground"
+    ports:
+      - "8003:80"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8003
+      APP_KEY: "${APP_KEY_ORDER_SERVICE:?APP_KEY_ORDER_SERVICE doit être défini dans le .env racine}"
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: order_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD doit être défini dans le .env racine}"
+      SESSION_DRIVER: file
+      CACHE_STORE: file
+      INTERNAL_KEY: "${INTERNAL_KEY:?INTERNAL_KEY doit être défini dans le .env racine}"
+      USER_SERVICE_URL: http://user-service
+    volumes:
+      - order_service_storage:/var/www/html/storage
+
+volumes:
+  gateway_storage:
+  user_service_storage:
+  catalog_service_storage:
+  order_service_storage:
+  postgres_data:

@@ -1,0 +1,307 @@
+@startuml
+skinparam shadowing false
+skinparam roundCorner 12
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam backgroundColor white
+skinparam dpi 150
+skinparam defaultFontColor #1F2933
+skinparam ArrowColor #14694A
+skinparam ClassBorderColor #14694A
+skinparam ClassFontColor #1F2933
+skinparam ClassAttributeFontColor #1F2933
+skinparam ClassMethodFontColor #1F2933
+skinparam PackageBorderColor #14694A
+skinparam PackageTitleFontColor #1B8A5A
+skinparam NoteBackgroundColor #FFF8E1
+skinparam NoteBorderColor #14694A
+skinparam classAttributeIconSize 0
+
+left to right direction
+header PharmaLomé
+title Classes métier et contrôleurs — d'après le code actuel
+footer 14 novembre 2026
+
+package "Utilisateurs\nuser-service — user_db" #E3F4EB {
+  class User {
+    +id : bigint
+    +name : string
+    +nom : ?string
+    +prenom : ?string
+    +email : string
+    +email_verified_at : ?datetime
+    +password : string
+    +telephone : ?string
+    +adresse : ?text
+    +role : string
+    +actif : bool
+    +qualification : ?string
+    +numero_ordre : ?string
+    +pharmacien_verifie : bool
+  }
+  class UserController {
+    +register(Request)
+    +login(Request)
+    +logout(Request)
+    +me(Request)
+    +updateProfile(Request)
+    +updatePassword(Request)
+    +index()
+    +storeStaff(Request)
+    +show(User)
+    +update(Request, User)
+    +resendInvitation(User)
+    +destroy(User)
+  }
+  class InternalKey <<middleware>> {
+    +handle(Request, Closure) : Response
+  }
+}
+
+package "Catalogue\ncatalog-service — catalog_db" #EAF2FF {
+  class Category {
+    +id : bigint
+    +libelle : string
+    +medicaments() : HasMany
+  }
+  class Medicament {
+    +id : bigint
+    +categorie_id : bigint
+    +nom : string
+    +dosage : ?string
+    +laboratoire : ?string
+    +description : ?text
+    +prix : int
+    +quantite_stock : int
+    +seuil_alerte : int
+    +date_peremption : ?date
+    +ordonnance_requise : bool
+    +promotion : bool
+    +prix_promotion : ?int
+    +photo : ?string
+    +categorie() : BelongsTo
+  }
+  class CatalogController {
+    +publicStats()
+    +categories()
+    +storeCategory(Request)
+    +updateCategory(Request, Category)
+    +deleteCategory(Category)
+    +index(Request)
+    +show(Medicament)
+    +store(Request)
+    +update(Request, Medicament)
+    +destroy(Medicament)
+    +verifier(Request)
+    +diminuerStock(Request, Medicament)
+    +reapprovisionnerStock(Request, Medicament)
+    +alertes()
+  }
+  class InternalKey <<middleware>> {
+    +handle(Request, Closure) : Response
+  }
+}
+
+package "Commandes\norder-service — order_db" #FFF1E6 {
+  class Commande {
+    +id : bigint
+    +user_id : bigint
+    +livreur_id : ?bigint
+    +statut : string
+    +mode_reception : enum
+    +adresse_livraison : ?text
+    +sous_total : int
+    +frais_livraison : int
+    +total : int
+    +lignes() : HasMany
+    +ordonnance() : HasOne
+    +paiement() : HasOne
+    +notifications() : HasMany
+  }
+  class LigneCommande {
+    +id : bigint
+    +commande_id : bigint
+    +medicament_id : bigint
+    +nom_medicament : string
+    +prix_unitaire : int
+    +quantite : int
+    +commande() : BelongsTo
+  }
+  class Ordonnance {
+    +id : bigint
+    +commande_id : bigint
+    +fichier : ?string
+    +statut : enum
+    +motif_refus : ?text
+    +pharmacien_id : ?bigint
+    +validee_le : ?datetime
+    +commande() : BelongsTo
+  }
+  class Paiement {
+    +id : bigint
+    +commande_id : bigint
+    +mode : enum
+    +montant : int
+    +statut : enum
+    +reference : string
+    +commande() : BelongsTo
+  }
+  class Notification {
+    +id : bigint
+    +user_id : bigint
+    +message : text
+    +lu : bool
+    +commande() : BelongsTo
+  }
+  class OrderController {
+    +index(Request)
+    +show(Commande)
+    +store(Request)
+    +updateStatus(Request, Commande)
+    +assignCourier(Request, Commande)
+    +courierMissions(Request)
+    +completeMission(Request, Commande)
+    +cancel(Commande)
+    +ordonnances()
+    +ordonnanceShow(Ordonnance)
+    +showFile(Ordonnance)
+    +valider(Request, Ordonnance)
+    +refuser(Request, Ordonnance)
+    +paiement(Request, Commande)
+    +stats()
+    +notifications(Request)
+    +markNotificationsAsRead(Request)
+  }
+  class InternalKey <<middleware>> {
+    +handle(Request, Closure) : Response
+  }
+}
+
+package "Gateway\ninterface Laravel" #F3E8FF {
+  class AuthController {
+    +register(Request)
+    +login(Request)
+    +logout(Request)
+    +updateProfile(Request)
+    +updatePassword(Request)
+    +sendPasswordResetLink(Request)
+    +resetPassword(Request)
+  }
+  class CheckoutController {
+    +store(Request)
+    -serviceRequest() : PendingRequest
+    -serviceUrl(string, string) : string
+  }
+  class GatewayController {
+    +home(PublicStatsService, CatalogStorefrontService)
+    +catalog(Request, CatalogStorefrontService)
+    +showProduct(int, CatalogStorefrontService)
+    +orders()
+    +account()
+    +adminDashboard(PublicStatsService)
+  }
+  class CatalogStorefrontService {
+    +snapshot(array) : array
+    +product(int) : array
+  }
+  class PublicStatsService {
+    +get() : array
+  }
+  class PharmacienController {
+    +dashboard()
+    +ordonnances()
+    +validatePrescription(int)
+    +rejectPrescription(Request, int)
+    +prescriptionFile(int)
+    +stock()
+    +restock(Request, int)
+  }
+  class AdminController {
+    +users()
+    +createUser(Request)
+    +resendInvitation(int)
+    +updateUser(Request, int)
+    +orders()
+    +updateOrderStatus(Request, int)
+    +assignCourier(Request, int)
+  }
+  class CatalogueAdminController {
+    +index()
+    +storeCategory(Request)
+    +updateCategory(Request, int)
+    +storeProduct(Request)
+    +updateProduct(Request, int)
+    +destroyProduct(int)
+  }
+  class CourierController {
+    +dashboard()
+    +completeMission(Request, int)
+  }
+  class EnsureGatewayAuthenticated <<middleware>> {
+    +handle(Request, Closure) : Response
+  }
+  class EnsureGatewayRole <<middleware>> {
+    +handle(Request, Closure, string[]) : Response
+  }
+}
+
+Category "1" <-- "0..*" Medicament : categorie_id (FK)
+Commande "1" *-- "1..*" LigneCommande : commande_id (FK)
+Commande "1" -- "0..1" Ordonnance : relation Eloquent hasOne
+Commande "1" -- "0..1" Paiement : relation Eloquent hasOne
+
+User "1" .. "0..*" Commande : user_id
+User "0..1" .. "0..*" Commande : livreur_id
+User "0..1" .. "0..*" Ordonnance : pharmacien_id
+User "1" .. "0..*" Notification : user_id
+Medicament "0..1" .. "0..*" LigneCommande : medicament_id
+
+UserController ..> User
+CatalogController ..> Category
+CatalogController ..> Medicament
+OrderController ..> Commande
+OrderController ..> Ordonnance
+OrderController ..> LigneCommande
+OrderController ..> Paiement
+OrderController ..> Notification
+AuthController ..> UserController : REST + jeton Sanctum
+EnsureGatewayAuthenticated ..> UserController : GET /api/me + jeton
+CheckoutController ..> CatalogController : REST + X-Internal-Key
+CheckoutController ..> OrderController : REST + X-Internal-Key
+PharmacienController ..> OrderController : REST + X-Internal-Key
+PharmacienController ..> CatalogController : REST + X-Internal-Key
+AdminController ..> UserController : REST + Sanctum + X-Internal-Key
+AdminController ..> OrderController : REST + X-Internal-Key
+CatalogueAdminController ..> CatalogController : REST + X-Internal-Key
+CourierController ..> OrderController : REST + X-Internal-Key + jeton
+GatewayController ..> CatalogStorefrontService
+GatewayController ..> PublicStatsService
+CatalogStorefrontService ..> CatalogController : REST + X-Internal-Key
+PublicStatsService ..> UserController : REST + X-Internal-Key
+PublicStatsService ..> CatalogController : REST + X-Internal-Key
+PublicStatsService ..> OrderController : REST + X-Internal-Key
+
+note bottom of Commande
+  Statuts écrits ou lus dans le code : en_attente,
+  ordonnance_a_valider, validee, en_preparation, prete,
+  en_livraison, livree, retiree, refusee et annulee.
+  Le champ statut est une string; l'admin valide cette liste
+  dans la gateway, sans machine de transitions.
+end note
+
+note bottom of Paiement
+  Les relations Eloquent Ordonnance et Paiement sont hasOne,
+  mais leurs FK commande_id ne sont pas déclarées uniques en base.
+end note
+
+note bottom of Notification
+  La méthode commande() existe dans le modèle, mais rapproche par user_id
+  (pas par commande_id); ce n'est pas une relation de commande fiable.
+end note
+
+note bottom of User
+  Les liens pointillés vers les commandes, ordonnances,
+  notifications et lignes utilisent seulement des identifiants :
+  aucune FK SQL ne traverse les bases des services.
+end note
+@enduml

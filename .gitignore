@@ -1,0 +1,21 @@
+# Secrets and local environment files
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Dependencies and generated runtime data
+**/vendor/
+**/node_modules/
+**/storage/
+**/public/build/
+**/public/hot
+**/bootstrap/cache/*.php
+
+# Local editor and test state
+.phpunit.cache/
+.phpunit.result.cache
+.DS_Store
+Thumbs.db

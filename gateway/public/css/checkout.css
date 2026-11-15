@@ -1,0 +1,7 @@
+.checkout-form { padding: 1.35rem; border: 1px solid var(--border); border-radius: 18px; background: #fff; box-shadow: var(--shadow); }
+.checkout-form small { display: block; margin-top: .45rem; }
+.payment-note { display: flex; gap: .65rem; margin: 0; padding: .9rem 1rem; border-radius: 12px; background: var(--mint); color: var(--muted); font-size: .9rem; }
+.payment-note .material-symbols-rounded { flex: 0 0 auto; color: var(--primary); }
+.summary-total { padding-top: .85rem; border-top: 1px solid var(--border); font-size: 1.05rem; }
+[data-checkout-submit]:disabled { opacity: .55; cursor: not-allowed; }
+@media (max-width: 760px) { .checkout-form { padding: 1rem; } }

@@ -1,0 +1,36 @@
+FROM php:8.4-apache
+
+WORKDIR /var/www/html
+
+RUN apt-get update && apt-get install -y \
+    acl \
+    libpq-dev \
+    unzip \
+    git \
+    curl \
+    && docker-php-ext-install pdo_pgsql pgsql \
+    && a2enmod rewrite
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+COPY . /var/www/html
+
+RUN cp .env.example .env
+
+RUN printf '%s\n' \
+    '<VirtualHost *:80>' \
+    '    DocumentRoot /var/www/html/public' \
+    '    <Directory /var/www/html/public>' \
+    '        Options Indexes FollowSymLinks' \
+    '        AllowOverride All' \
+    '        Require all granted' \
+    '    </Directory>' \
+    '</VirtualHost>' \
+    > /etc/apache2/sites-available/000-default.conf \
+    && a2enmod rewrite
+
+RUN composer install --no-interaction --prefer-dist --no-progress
+
+EXPOSE 80
+
+CMD ["apache2-foreground"]

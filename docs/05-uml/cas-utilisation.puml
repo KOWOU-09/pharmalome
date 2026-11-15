@@ -1,0 +1,150 @@
+@startuml
+skinparam shadowing false
+skinparam roundCorner 12
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam backgroundColor white
+skinparam dpi 150
+skinparam defaultFontColor #1F2933
+skinparam ArrowColor #14694A
+skinparam ActorBorderColor #14694A
+skinparam ActorFontColor #1F2933
+skinparam UseCaseBackgroundColor #E3F4EB
+skinparam UseCaseBorderColor #14694A
+skinparam UseCaseFontColor #1F2933
+skinparam PackageBorderColor #14694A
+skinparam PackageTitleFontColor #1B8A5A
+skinparam NoteBackgroundColor #FFF8E1
+skinparam NoteBorderColor #14694A
+
+left to right direction
+header PharmaLomé
+title Cas d'utilisation — fonctionnalités implémentées
+footer 14 novembre 2026
+
+actor Visiteur
+actor Client
+actor Pharmacien
+actor Administrateur
+
+rectangle "MedExpress TOGO" {
+  package "Accès public" #E3F4EB {
+    usecase "Consulter l'accueil\net les statistiques" as UC_Accueil
+    usecase "Consulter le catalogue" as UC_Catalogue
+    usecase "Filtrer / rechercher\nles médicaments" as UC_Filtrer
+    usecase "Consulter une fiche\nmédicament" as UC_Fiche
+    usecase "Consulter À propos" as UC_About
+    usecase "Envoyer un message\nde contact" as UC_Contact
+    usecase "Créer un compte client" as UC_Inscription
+    usecase "Se connecter" as UC_Connexion
+    usecase "Réinitialiser\nson mot de passe" as UC_Reset
+  }
+
+  package "Espace client" #EAF2FF {
+    usecase "Gérer son profil" as UC_Profil
+    usecase "Modifier son mot\nde passe" as UC_Mdp
+    usecase "Se déconnecter" as UC_Logout
+    usecase "Gérer le panier" as UC_Panier
+    usecase "Passer une commande" as UC_Commander
+    usecase "Vérifier disponibilité\net prix du panier" as UC_Verifier
+    usecase "Joindre une ordonnance" as UC_Ordonnance
+    usecase "Choisir retrait\nou livraison" as UC_Reception
+    usecase "Consulter ses commandes" as UC_Suivi
+  }
+
+  package "Espace pharmacien" #FFF1E6 {
+    usecase "Consulter le tableau\nde bord pharmacien" as UC_DashboardPharma
+    usecase "Consulter les ordonnances" as UC_ListeOrd
+    usecase "Consulter un fichier\nd'ordonnance" as UC_FichierOrd
+    usecase "Valider une ordonnance" as UC_Valider
+    usecase "Refuser une ordonnance\navec motif" as UC_Refuser
+    usecase "Consulter le stock\net les alertes" as UC_Stock
+    usecase "Réapprovisionner\nle stock" as UC_Restock
+  }
+
+  package "Espace administrateur" #F3E8FF {
+    usecase "Consulter le tableau\nde bord administrateur" as UC_DashboardAdmin
+    usecase "Gérer les utilisateurs\n(recherche / filtres)" as UC_Users
+    usecase "Créer un compte\nprofessionnel" as UC_CreerStaff
+    usecase "Envoyer une invitation\nà la création" as UC_Invitation
+    usecase "Renvoyer une invitation" as UC_Renvoyer
+    usecase "Modifier rôle, activation\net vérification pharmacien" as UC_ModifierUser
+    usecase "Gérer catégories\net médicaments" as UC_CatalogAdmin
+    usecase "Créer / modifier\nune catégorie" as UC_Categories
+    usecase "Créer / modifier /\nsupprimer un médicament" as UC_Produits
+    usecase "Consulter les commandes" as UC_CommandesAdmin
+    usecase "Modifier le statut\nd'une commande" as UC_Statut
+    usecase "Affecter / retirer\nun livreur" as UC_Affecter
+  }
+}
+
+Visiteur --> UC_Accueil
+Visiteur --> UC_Catalogue
+Visiteur --> UC_Fiche
+Visiteur --> UC_About
+Visiteur --> UC_Contact
+Visiteur --> UC_Inscription
+Visiteur --> UC_Connexion
+Visiteur --> UC_Reset
+
+Client --> UC_Catalogue
+Client --> UC_Fiche
+Client --> UC_Connexion
+Client --> UC_Profil
+Client --> UC_Mdp
+Client --> UC_Logout
+Client --> UC_Panier
+Client --> UC_Commander
+Client --> UC_Suivi
+
+Pharmacien --> UC_DashboardPharma
+Pharmacien --> UC_ListeOrd
+Pharmacien --> UC_FichierOrd
+Pharmacien --> UC_Valider
+Pharmacien --> UC_Refuser
+Pharmacien --> UC_Stock
+Pharmacien --> UC_Restock
+
+Administrateur --> UC_DashboardAdmin
+Administrateur --> UC_Users
+Administrateur --> UC_CreerStaff
+Administrateur --> UC_Invitation
+Administrateur --> UC_ModifierUser
+Administrateur --> UC_CatalogAdmin
+Administrateur --> UC_CommandesAdmin
+Administrateur --> UC_Statut
+Administrateur --> UC_Affecter
+Administrateur --> UC_Valider
+Administrateur --> UC_Refuser
+Administrateur --> UC_Stock
+Administrateur --> UC_Restock
+
+UC_Filtrer ..> UC_Catalogue : <<extend>>
+UC_Fiche ..> UC_Catalogue : <<extend>>
+UC_Commander ..> UC_Verifier : <<include>>
+UC_Commander ..> UC_Reception : <<include>>
+UC_Ordonnance ..> UC_Commander : <<extend>>
+UC_Commander ..> UC_Connexion : <<extend>>\nsi session absente
+UC_Mdp ..> UC_Connexion : <<extend>>\nsi session absente
+UC_Profil ..> UC_Connexion : <<extend>>\nsi session absente
+UC_Logout ..> UC_Connexion : <<extend>>\nsi session absente
+UC_Suivi ..> UC_Connexion : <<extend>>\nsi session absente
+UC_Valider ..> UC_ListeOrd : <<extend>>
+UC_Refuser ..> UC_ListeOrd : <<extend>>
+UC_FichierOrd ..> UC_ListeOrd : <<extend>>
+UC_Restock ..> UC_Stock : <<extend>>
+UC_CreerStaff ..> UC_Users : <<extend>>
+UC_CreerStaff ..> UC_Invitation : <<include>>
+UC_Renvoyer ..> UC_Users : <<extend>>
+UC_ModifierUser ..> UC_Users : <<extend>>
+UC_Categories ..> UC_CatalogAdmin : <<extend>>
+UC_Produits ..> UC_CatalogAdmin : <<extend>>
+UC_Statut ..> UC_CommandesAdmin : <<extend>>
+UC_Affecter ..> UC_CommandesAdmin : <<extend>>
+
+note bottom of UC_Ordonnance
+  Formats acceptés par le checkout : JPG, JPEG, PNG ou PDF,
+  taille maximale 4 Mo. Le formulaire transmet un fichier optionnel;
+  le checkout l'exige si un produit le nécessite.
+end note
+@enduml

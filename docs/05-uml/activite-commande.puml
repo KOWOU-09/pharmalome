@@ -1,0 +1,99 @@
+@startuml
+skinparam shadowing false
+skinparam roundCorner 12
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam backgroundColor white
+skinparam dpi 150
+skinparam defaultFontColor #1F2933
+skinparam ArrowColor #14694A
+skinparam ActivityBorderColor #14694A
+skinparam ActivityStartColor #1B8A5A
+skinparam ActivityEndColor #1B8A5A
+skinparam ActivityBackgroundColor #E3F4EB
+skinparam ActivityFontColor #1F2933
+skinparam DiamondBorderColor #14694A
+skinparam DiamondBackgroundColor #FFF8E1
+skinparam NoteBackgroundColor #FFF8E1
+skinparam NoteBorderColor #14694A
+
+header PharmaLomé
+title Activité — du catalogue au retrait ou à la livraison
+footer 14 novembre 2026
+
+|#E3F4EB|Client|
+start
+:Rechercher un médicament;
+|#EAF2FF|Plateforme|
+:Lire le catalogue\n(GET /api/medicaments);
+:Afficher les produits et disponibilités;
+|#E3F4EB|Client|
+:Choisir un médicament\net l'ajouter au panier;
+:Ouvrir le checkout;
+|#F3E8FF|Plateforme|
+:Vérifier le jeton Sanctum\n(GET user-service /api/me);
+if (Jeton actif et compte actif ?) then (oui)
+else (non)
+  :Fermer la session expirée;
+  |#E3F4EB|Client|
+  :Se reconnecter;
+  stop
+endif
+:Vérifier chaque article auprès du catalogue\n(POST /api/medicaments/verifier);
+if (Tous les articles disponibles ?) then (oui)
+else (non)
+  :Retourner l'erreur\n« Stock insuffisant » ou produit introuvable;
+  |#E3F4EB|Client|
+  :Corriger le panier;
+  stop
+endif
+|#E3F4EB|Client|
+:Choisir retrait ou livraison;
+:Joindre l'ordonnance si elle est requise;
+|#F3E8FF|Plateforme|
+if (Ordonnance requise mais absente ?) then (oui)
+  :Afficher l'erreur et interrompre\ncette tentative de checkout;
+  stop
+endif
+:Envoyer les articles vérifiés\net le fichier éventuel au service commandes;
+if (Fichier d'ordonnance transmis ?) then (oui)
+  :Créer commande au statut\nordonnance_a_valider;
+  :Créer ordonnance au statut en_attente;
+  |#FFF1E6|Pharmacien|
+  :Consulter l'ordonnance\net son fichier;
+  if (Ordonnance conforme ?) then (oui)
+    :Valider l'ordonnance;
+    |#F3E8FF|Plateforme|
+    :Mettre ordonnance et commande\nau statut validee;
+  else (non)
+    :Refuser avec un motif;
+    |#F3E8FF|Plateforme|
+    :Mettre ordonnance et commande\nau statut refusee;
+    stop
+  endif
+else (non)
+  :Créer commande au statut validee;
+endif
+|#F3E8FF|Plateforme|
+:L'administrateur met à jour le statut\nvers en_preparation puis prete;
+if (Mode de réception ?) then (livraison)
+  :L'administrateur met le statut\nen_livraison et affecte un livreur;
+  :Le livreur termine la mission\nvia /api/livreur/commandes/{id}/statut;
+  :Mettre la commande au statut livree;
+  |#E3F4EB|Client|
+  :Consulter le statut livree;
+else (retrait)
+  :Le statut est mis à jour à retiree\nvia la gestion du statut de commande;
+  |#E3F4EB|Client|
+  :Retirer la commande et consulter le statut retiree;
+endif
+stop
+
+note right
+  Le checkout enregistre une notification.
+  La route de décrément du stock existe, mais n'est appelée
+  ni à la commande ni à la validation de l'ordonnance.
+  Le champ statut est une chaîne libre; les transitions ne
+  sont pas imposées par une machine d'état dans le code.
+end note
+@enduml
