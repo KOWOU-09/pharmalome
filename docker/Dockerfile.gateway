@@ -30,6 +30,7 @@ RUN printf '%s\n' \
 RUN composer install --no-dev --no-interaction --prefer-dist --no-progress --optimize-autoloader
 
 RUN mkdir -p storage bootstrap/cache \
+    && rm -f bootstrap/cache/config.php \
     && chown -R www-data:www-data storage bootstrap/cache
 
 EXPOSE 80
