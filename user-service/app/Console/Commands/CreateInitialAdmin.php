@@ -11,7 +11,7 @@ class CreateInitialAdmin extends Command
 {
     protected $signature = 'users:create-admin {--name=} {--email=}';
 
-    protected $description = 'Créer ou promouvoir le premier compte administrateur';
+    protected $description = 'Créer le premier compte administrateur';
 
     public function handle(): int
     {
@@ -34,26 +34,38 @@ class CreateInitialAdmin extends Command
             'password' => ['required', 'string', 'min:8'],
         ])->validate();
 
-        $existingAdmin = User::where('role', 'admin')
-            ->where('email', '!=', $validated['email'])
-            ->exists();
+        $admin = User::where('role', 'admin')->first();
 
-        if ($existingAdmin) {
+        if ($admin) {
+            if ($admin->email === $validated['email']) {
+                $this->info('Le compte administrateur existe déjà.');
+                return self::SUCCESS;
+            }
+
             $this->error('Un autre administrateur existe déjà.');
             return self::FAILURE;
         }
 
-        User::updateOrCreate(
-            ['email' => $validated['email']],
-            [
+        $user = User::where('email', $validated['email'])->first();
+
+        if ($user) {
+            $user->update([
                 'name' => $validated['name'],
                 'password' => Hash::make($validated['password']),
                 'role' => 'admin',
                 'actif' => true,
-            ]
-        );
+            ]);
+        } else {
+            User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role' => 'admin',
+                'actif' => true,
+            ]);
+        }
 
-        $this->info('Compte administrateur créé ou mis à jour avec succès.');
+        $this->info('Compte administrateur créé avec succès.');
 
         return self::SUCCESS;
     }
