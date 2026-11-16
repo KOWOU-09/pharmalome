@@ -6,13 +6,12 @@ use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 
 class CreateInitialAdmin extends Command
 {
     protected $signature = 'users:create-admin {--name=} {--email=}';
 
-    protected $description = 'Créer le premier compte administrateur';
+    protected $description = 'Créer ou promouvoir le premier compte administrateur';
 
     public function handle(): int
     {
@@ -20,13 +19,8 @@ class CreateInitialAdmin extends Command
         $email = $this->option('email') ?: env('INITIAL_ADMIN_EMAIL');
         $password = env('INITIAL_ADMIN_PASSWORD');
 
-        if (User::where('role', 'admin')->exists()) {
-            $this->info('Un compte administrateur existe déjà.');
-            return self::SUCCESS;
-        }
-
         if (!$name || !$email || !$password) {
-            $this->error('Les informations du compte administrateur sont incomplètes.');
+            $this->error('Les informations administrateur sont incomplètes.');
             return self::FAILURE;
         }
 
@@ -36,19 +30,30 @@ class CreateInitialAdmin extends Command
             'password' => $password,
         ], [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
+            'email' => ['required', 'email', 'max:255'],
             'password' => ['required', 'string', 'min:8'],
         ])->validate();
 
-        User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'role' => 'admin',
-            'actif' => true,
-        ]);
+        $existingAdmin = User::where('role', 'admin')
+            ->where('email', '!=', $validated['email'])
+            ->exists();
 
-        $this->info('Compte administrateur créé avec succès.');
+        if ($existingAdmin) {
+            $this->error('Un autre administrateur existe déjà.');
+            return self::FAILURE;
+        }
+
+        User::updateOrCreate(
+            ['email' => $validated['email']],
+            [
+                'name' => $validated['name'],
+                'password' => Hash::make($validated['password']),
+                'role' => 'admin',
+                'actif' => true,
+            ]
+        );
+
+        $this->info('Compte administrateur créé ou mis à jour avec succès.');
 
         return self::SUCCESS;
     }
