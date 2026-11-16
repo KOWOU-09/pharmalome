@@ -12,19 +12,23 @@ class CreateInitialAdmin extends Command
 {
     protected $signature = 'users:create-admin {--name=} {--email=}';
 
-    protected $description = 'Crée de façon interactive le premier compte administrateur';
+    protected $description = 'Créer le premier compte administrateur';
 
     public function handle(): int
     {
-        if (User::where('role', 'admin')->exists()) {
-            $this->error('Un compte administrateur existe déjà.');
+        $name = $this->option('name') ?: env('INITIAL_ADMIN_NAME');
+        $email = $this->option('email') ?: env('INITIAL_ADMIN_EMAIL');
+        $password = env('INITIAL_ADMIN_PASSWORD');
 
-            return self::FAILURE;
+        if (User::where('role', 'admin')->exists()) {
+            $this->info('Un compte administrateur existe déjà.');
+            return self::SUCCESS;
         }
 
-        $name = $this->option('name') ?: $this->ask('Nom complet');
-        $email = $this->option('email') ?: $this->ask('Adresse e-mail');
-        $password = $this->secret('Mot de passe (8 caractères minimum)');
+        if (!$name || !$email || !$password) {
+            $this->error('Les informations du compte administrateur sont incomplètes.');
+            return self::FAILURE;
+        }
 
         $validated = Validator::make([
             'name' => $name,
@@ -36,12 +40,6 @@ class CreateInitialAdmin extends Command
             'password' => ['required', 'string', 'min:8'],
         ])->validate();
 
-        if ($password !== $this->secret('Confirmer le mot de passe')) {
-            $this->error('Les mots de passe ne correspondent pas.');
-
-            return self::FAILURE;
-        }
-
         User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
@@ -50,7 +48,7 @@ class CreateInitialAdmin extends Command
             'actif' => true,
         ]);
 
-        $this->info('Le compte administrateur initial a été créé.');
+        $this->info('Compte administrateur créé avec succès.');
 
         return self::SUCCESS;
     }
