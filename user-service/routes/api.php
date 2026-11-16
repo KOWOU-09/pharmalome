@@ -1,5 +1,5 @@
 <?php
-
+use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -31,3 +31,18 @@ Route::middleware(['auth:sanctum', 'internal.key'])->group(function () {
 });
 
 Route::middleware('internal.key')->get('/public/stats', [UserController::class, 'publicStats']);
+Route::post('/setup/initial-admin', function (\Illuminate\Http\Request $request) {
+    $expected = (string) config('services.initial_admin_setup_key');
+    $provided = (string) $request->header('X-Setup-Key');
+
+    if ($expected === '' || ! hash_equals($expected, $provided)) {
+        return response()->json(['message' => 'Accès refusé.'], 403);
+    }
+
+    $exitCode = Artisan::call('users:create-admin');
+
+    return response()->json([
+        'message' => Artisan::output(),
+        'success' => $exitCode === 0,
+    ], $exitCode === 0 ? 200 : 500);
+})->middleware('throttle:3,1');

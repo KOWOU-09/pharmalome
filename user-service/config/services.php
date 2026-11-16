@@ -36,5 +36,6 @@ return [
     ],
 
     'internal_key' => env('INTERNAL_KEY', 'change-me-internal-key'),
+    'initial_admin_setup_key' => env('INITIAL_ADMIN_SETUP_KEY'),
 
 ];
