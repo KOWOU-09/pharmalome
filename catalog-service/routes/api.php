@@ -5,12 +5,13 @@ use App\Http\Controllers\CatalogController;
 use Illuminate\Support\Facades\Route;
 
 // Route publique : vérification du service
-Route::get('/health', fn () => response()->json([
-    'service' => 'catalog-service',
-    'status' => 'ok',
-    'message' => 'Service catalogue opérationnel.',
-]));
-
+Route::get('/health', function () {
+    return response()->json([
+        'test' => 'RENDER_OK',
+        'service' => 'catalog-service',
+        'status' => 'ok',
+    ]);
+});
 // Routes protégées par la clé interne
 Route::middleware('internal.key')->group(function () {
     Route::get('/public/stats', [CatalogController::class, 'publicStats']);
