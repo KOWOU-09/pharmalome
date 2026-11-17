@@ -1,28 +1,29 @@
 <?php
 
-ini_set('display_errors', '1');
-error_reporting(E_ALL);
+require __DIR__.'/../vendor/autoload.php';
 
-header('Content-Type: text/plain; charset=UTF-8');
-
-echo "ETAPE 1 : PHP OK\n";
+$app = require __DIR__.'/../bootstrap/app.php';
 
 try {
-    require __DIR__.'/../vendor/autoload.php';
-    echo "ETAPE 2 : AUTOLOAD OK\n";
+    $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 
-    $app = require __DIR__.'/../bootstrap/app.php';
-    echo "ETAPE 3 : BOOTSTRAP OK\n";
+    $request = Illuminate\Http\Request::create(
+        '/api/health',
+        'GET',
+        [],
+        [],
+        [],
+        ['HTTP_ACCEPT' => 'application/json']
+    );
 
-    $request = Illuminate\Http\Request::create('/api/health', 'GET');
+    $response = $kernel->handle($request);
 
-    echo "ETAPE 4 : REQUETE CREEE\n";
-
-    $response = $app->handleRequest($request);
-
-    echo "ETAPE 5 : REPONSE RECUE\n";
+    echo "LARAVEL : OK\n";
     echo "STATUS : ".$response->getStatusCode()."\n";
-    echo "CONTENU : ".$response->getContent()."\n";
+    echo "CONTENT TYPE : ".$response->headers->get('Content-Type')."\n";
+    echo "BODY : ".$response->getContent()."\n";
+
+    $kernel->terminate($request, $response);
 
 } catch (Throwable $e) {
     echo "ERREUR : ".$e->getMessage()."\n";
